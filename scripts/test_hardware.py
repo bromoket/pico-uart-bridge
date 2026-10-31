@@ -3,9 +3,14 @@
 Requires explicit if02 loopback, pyserial/pyusb; results contain counts, not data.
 """
 
-import argparse, json, os, threading, time
-from bridge_serial import BridgeSerial
+import argparse
+import json
+import os
+import threading
+import time
+
 from bridge_diag import device, snapshot
+from bridge_serial import BridgeSerial
 
 
 def transfer(s, payload, timeout):
@@ -44,9 +49,7 @@ def main():
     p.add_argument("--output", required=True)
     a = p.parse_args()
     if not a.loopback_port.endswith("-if02"):
-        p.error(
-            "Use the stable /dev/serial/by-id/...-if02 path, physically looped GP4/5"
-        )
+        p.error("Use the stable /dev/serial/by-id/...-if02 path, physically looped GP4/5")
     d = device()
     results = []
 

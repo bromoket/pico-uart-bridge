@@ -1,7 +1,12 @@
 #!/usr/bin/env python3
 """Bounded binary serial capture with private files, exclusive access, no console dump."""
 
-import argparse, hashlib, json, os, time
+import argparse
+import hashlib
+import json
+import os
+import time
+
 from bridge_serial import BridgeSerial
 
 

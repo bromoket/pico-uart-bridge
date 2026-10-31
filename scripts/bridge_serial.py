@@ -7,6 +7,7 @@ or silent fallback baud. Standard rates and non-Linux platforms are unchanged.
 """
 
 import sys
+
 import serial
 
 if sys.platform.startswith("linux"):

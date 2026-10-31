@@ -1,6 +1,8 @@
 """Compile-time pin safety: rejects conflicts before any UF2 can be built."""
 
-import subprocess, tempfile, unittest
+import subprocess
+import tempfile
+import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -8,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 class BoardTests(unittest.TestCase):
     def compile(self, *defines):
-        with tempfile.TemporaryDirectory() as d:
+        with tempfile.TemporaryDirectory():
             return subprocess.run(
                 [
                     "cc",
@@ -42,9 +44,7 @@ class BoardTests(unittest.TestCase):
 
     def test_flow_valid(self):
         self.assertEqual(
-            self.compile(
-                "BRIDGE_UART0_CTS=18", "BRIDGE_UART0_RTS=19", "BRIDGE_UART0_DTR=20"
-            ),
+            self.compile("BRIDGE_UART0_CTS=18", "BRIDGE_UART0_RTS=19", "BRIDGE_UART0_DTR=20"),
             0,
         )
 

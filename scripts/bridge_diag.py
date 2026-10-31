@@ -4,6 +4,7 @@
 import argparse
 import json
 import struct
+
 import usb.core
 
 FIELDS = (
@@ -22,9 +23,7 @@ def device(serial=None):
 
 
 def snapshot(d):
-    words = struct.unpack(
-        "<33I", bytes(d.ctrl_transfer(0xA1, 0x40, 0, 5, 132, timeout=2000))
-    )
+    words = struct.unpack("<33I", bytes(d.ctrl_transfer(0xA1, 0x40, 0, 5, 132, timeout=2000)))
     if words[0] != 1:
         raise RuntimeError("Unsupported diagnostics version")
     return [dict(zip(FIELDS, words[1 + i * 16 : 17 + i * 16])) for i in range(2)]
