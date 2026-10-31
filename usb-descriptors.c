@@ -18,13 +18,13 @@
 #define USBD_VID 0x2E8A /* Raspberry Pi */
 #define USBD_PID 0x000A /* Raspberry Pi Pico SDK CDC */
 
-#define USBD_DESC_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN * CFG_TUD_CDC + TUD_RPI_RESET_DESC_LEN)
+#define USBD_DESC_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN * CFG_TUD_CDC + TUD_RPI_RESET_DESC_LEN + 9)
 #define USBD_MAX_POWER_MA 500
 
 #define USBD_ITF_CDC_0 0
 #define USBD_ITF_CDC_1 2
 #define USBD_ITF_RESET 4
-#define USBD_ITF_MAX 5
+#define USBD_ITF_MAX 6
 
 #define USBD_CDC_0_EP_CMD 0x81
 #define USBD_CDC_1_EP_CMD 0x83
@@ -75,6 +75,8 @@ static const uint8_t usbd_desc_cfg[USBD_DESC_LEN] = {
 		USBD_CDC_IN_OUT_MAX_SIZE),
 
 	TUD_RPI_RESET_DESCRIPTOR(USBD_ITF_RESET, 0),
+	/* Endpoint-free interface: diagnostics never enter the UART byte stream. */
+	9, TUSB_DESC_INTERFACE, 5, 0, 0, TUSB_CLASS_VENDOR_SPECIFIC, 0x42, 1, 0,
 };
 
 static char usbd_serial[USBD_STR_SERIAL_LEN] = "000000000000";

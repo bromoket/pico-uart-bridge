@@ -1,2 +1,13 @@
 .vscode
 build
+build-*/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+# Raw serial captures and target dumps are local-only, never public artifacts.
+*.bin
+*.log
+*.uf2
+*.elf
+*.cfg
