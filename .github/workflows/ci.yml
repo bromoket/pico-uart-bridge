@@ -3,6 +3,7 @@ name: pico-uart-bridge
 on:
   - push
   - pull_request
+  - workflow_dispatch
 
 jobs:
   host-tests:
