@@ -1,0 +1,36 @@
+[
+  {
+    "name": "invalid-coding",
+    "pass": true,
+    "rejected": 5
+  },
+  {
+    "name": "continuous-break-clear",
+    "pass": true
+  },
+  {
+    "name": "remote-BOOTSEL-roundtrip-0",
+    "pass": true,
+    "boot_baud_preserved": true
+  },
+  {
+    "name": "remote-BOOTSEL-roundtrip-1",
+    "pass": true,
+    "boot_baud_preserved": true
+  },
+  {
+    "name": "remote-BOOTSEL-roundtrip-2",
+    "pass": true,
+    "boot_baud_preserved": true
+  },
+  {
+    "name": "remote-BOOTSEL-roundtrip-3",
+    "pass": true,
+    "boot_baud_preserved": true
+  },
+  {
+    "name": "remote-BOOTSEL-roundtrip-4",
+    "pass": true,
+    "boot_baud_preserved": true
+  }
+]

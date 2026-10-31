@@ -1,0 +1,80 @@
+[
+  {
+    "baud": 300,
+    "actual_baud": 299,
+    "bytes": 32,
+    "equal": true,
+    "error_delta": {
+      "rx_dropped": 0,
+      "overruns": 0,
+      "framing_errors": 0,
+      "parity_errors": 0
+    },
+    "seconds": 1.067
+  },
+  {
+    "baud": 1200,
+    "actual_baud": 1199,
+    "bytes": 32,
+    "equal": true,
+    "error_delta": {
+      "rx_dropped": 0,
+      "overruns": 0,
+      "framing_errors": 0,
+      "parity_errors": 0
+    },
+    "seconds": 0.267
+  },
+  {
+    "baud": 518400,
+    "actual_baud": 518134,
+    "bytes": 131072,
+    "equal": true,
+    "error_delta": {
+      "rx_dropped": 0,
+      "overruns": 0,
+      "framing_errors": 0,
+      "parity_errors": 0
+    },
+    "seconds": 2.53
+  },
+  {
+    "baud": 1036800,
+    "actual_baud": 1037344,
+    "bytes": 131072,
+    "equal": true,
+    "error_delta": {
+      "rx_dropped": 0,
+      "overruns": 0,
+      "framing_errors": 0,
+      "parity_errors": 0
+    },
+    "seconds": 1.264
+  },
+  {
+    "baud": 6000000,
+    "actual_baud": 6024096,
+    "bytes": 131072,
+    "equal": true,
+    "error_delta": {
+      "rx_dropped": 0,
+      "overruns": 0,
+      "framing_errors": 0,
+      "parity_errors": 0
+    },
+    "seconds": 0.349
+  },
+  {
+    "baud": 7500000,
+    "actual_baud": 7462686,
+    "bytes": 131072,
+    "equal": true,
+    "error_delta": {
+      "rx_dropped": 0,
+      "overruns": 0,
+      "framing_errors": 0,
+      "parity_errors": 0
+    },
+    "seconds": 0.344
+  }
+]

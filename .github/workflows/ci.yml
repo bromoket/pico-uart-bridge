@@ -5,6 +5,21 @@ on:
   - pull_request
 
 jobs:
+  host-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install host test dependencies
+        run: sudo apt-get update && sudo apt-get install -y python3-serial
+      - name: Unit and native ring tests
+        run: |
+          python3 -m unittest discover -s tests -v
+          cc -std=c11 -Wall -Wextra -Werror -O2 -pthread tests/ring_test.c -o /tmp/ring-test
+          /tmp/ring-test
+          cc -std=c11 -Wall -Wextra -Werror -O2 tests/led_test.c -o /tmp/led-test
+          /tmp/led-test
+          git diff --check
+
   build:
     name: Build ${{ matrix.name }}
     runs-on: ubuntu-latest
@@ -14,15 +29,24 @@ jobs:
         include:
           - board: pico
             name: Raspberry Pi Pico
+            profile: pico
+            rgb: -1
           - board: pico2
             name: Raspberry Pi Pico 2
+            profile: pico2
+            rgb: -1
+          - board: pico
+            name: RP2040 clone RGB
+            profile: pico-clone-rgb
+            rgb: 23
     steps:
       - name: 'Check out code'
         uses: actions/checkout@v4
 
       - name: 'Install dependencies'
         run: |
-          sudo apt-get install cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi
 
       - name: 'Update Submodules'
         run: |
@@ -32,7 +56,7 @@ jobs:
       - name: 'Configure'
         run: |
           mkdir -p build
-          cmake -B build -DPICO_BOARD=${{ matrix.board }}
+          cmake -B build -DPICO_BOARD=${{ matrix.board }} -DBRIDGE_RGB_PIN=${{ matrix.rgb }}
 
       - name: 'Build'
         run: |
@@ -41,6 +65,6 @@ jobs:
       - name: 'Upload binary'
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.board }}-uart-bridge.uf2
+          name: ${{ matrix.profile }}-uart-bridge.uf2
           path: build/uart_bridge.uf2
           retention-days: 5

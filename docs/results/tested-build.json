@@ -1,0 +1,18 @@
+{
+  "sdk": "2.3.1",
+  "board": "pico",
+  "uart0": {
+    "tx": 16,
+    "rx": 17
+  },
+  "uart1": {
+    "tx": 4,
+    "rx": 5
+  },
+  "rgb_gpio": 23,
+  "led_gpio": 25,
+  "uf2_bytes": 72704,
+  "uf2_sha256": "0b1ad4ecf80d10ef61cb1f33b30e976f169ce30179f435b5656049547fc26281",
+  "flash_verified_against_local_build": true,
+  "binary_location": "local-only; compile from source"
+}

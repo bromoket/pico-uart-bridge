@@ -6,7 +6,7 @@
 #ifndef BRIDGE_RING_SIZE
 #define BRIDGE_RING_SIZE 32768u
 #endif
-_Static_assert((BRIDGE_RING_SIZE & (BRIDGE_RING_SIZE - 1)) == 0,
+_Static_assert(BRIDGE_RING_SIZE >= 2 && (BRIDGE_RING_SIZE & (BRIDGE_RING_SIZE - 1)) == 0,
                "ring size must be a power of two");
 /* Exactly one producer and consumer. Publish bytes/slots with release/acquire;
  * no mutex in the ISR, no memmove, and every slot is usable. uint32 wrap is
