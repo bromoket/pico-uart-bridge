@@ -22,6 +22,13 @@ target_link_libraries(uart_bridge
 	hardware_flash
 	pico_multicore
 	pico_stdlib
+	pico_usb_reset
 	tinyusb_device)
+
+target_compile_definitions(uart_bridge PRIVATE
+	PICO_ENABLE_USB_RESET_VIA_VENDOR_INTERFACE=1
+	PICO_USB_RESET_INCLUDE_DEFAULT_APP_DRIVER_CB=1
+	PICO_USB_RESET_SUPPORT_MS_OS_20_DESCRIPTOR=1
+	PICO_USB_RESET_MS_OS_20_DESCRIPTOR_ITF=4)
 
 pico_add_extra_outputs(uart_bridge)

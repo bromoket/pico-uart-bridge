@@ -217,6 +217,10 @@ static inline void uart_read_bytes(uint8_t itf)
 
 		mutex_exit(&ud->uart_mtx);
 	}
+
+	/* Acknowledge FIFO timeout and overrun interrupts. */
+	uart_get_hw(ui->inst)->icr = UART_UARTICR_RTIC_BITS |
+				     UART_UARTICR_OEIC_BITS;
 }
 
 void uart0_irq_fn(void)
@@ -289,12 +293,18 @@ void init_uart_data(uint8_t itf)
 	uart_set_format(ui->inst, databits_usb2uart(ud->usb_lc.data_bits),
 			stopbits_usb2uart(ud->usb_lc.stop_bits),
 			parity_usb2uart(ud->usb_lc.parity));
-	uart_set_fifo_enabled(ui->inst, false);
+	/* RX interrupts fire at half full or on a receive timeout. */
+	uart_set_fifo_enabled(ui->inst, true);
+	hw_write_masked(&uart_get_hw(ui->inst)->ifls,
+			2u << UART_UARTIFLS_RXIFLSEL_LSB,
+			UART_UARTIFLS_RXIFLSEL_BITS);
 
 	/* UART RX Interrupt */
 	irq_set_exclusive_handler(ui->irq, ui->irq_fn);
 	irq_set_enabled(ui->irq, true);
 	uart_set_irq_enables(ui->inst, true, false);
+	hw_set_bits(&uart_get_hw(ui->inst)->imsc,
+		    UART_UARTIMSC_RTIM_BITS | UART_UARTIMSC_OEIM_BITS);
 }
 
 int main(void)

@@ -11,18 +11,20 @@
 
 #include <hardware/flash.h>
 #include <tusb.h>
+#include <pico/usb_reset.h>
 
-#define DESC_STR_MAX 20
+#define DESC_STR_MAX 32
 
 #define USBD_VID 0x2E8A /* Raspberry Pi */
 #define USBD_PID 0x000A /* Raspberry Pi Pico SDK CDC */
 
-#define USBD_DESC_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN * CFG_TUD_CDC)
+#define USBD_DESC_LEN (TUD_CONFIG_DESC_LEN + TUD_CDC_DESC_LEN * CFG_TUD_CDC + TUD_RPI_RESET_DESC_LEN)
 #define USBD_MAX_POWER_MA 500
 
 #define USBD_ITF_CDC_0 0
 #define USBD_ITF_CDC_1 2
-#define USBD_ITF_MAX 4
+#define USBD_ITF_RESET 4
+#define USBD_ITF_MAX 5
 
 #define USBD_CDC_0_EP_CMD 0x81
 #define USBD_CDC_1_EP_CMD 0x83
@@ -71,15 +73,17 @@ static const uint8_t usbd_desc_cfg[USBD_DESC_LEN] = {
 	TUD_CDC_DESCRIPTOR(USBD_ITF_CDC_1, USBD_STR_CDC, USBD_CDC_1_EP_CMD,
 		USBD_CDC_CMD_MAX_SIZE, USBD_CDC_1_EP_OUT, USBD_CDC_1_EP_IN,
 		USBD_CDC_IN_OUT_MAX_SIZE),
+
+	TUD_RPI_RESET_DESCRIPTOR(USBD_ITF_RESET, 0),
 };
 
 static char usbd_serial[USBD_STR_SERIAL_LEN] = "000000000000";
 
 static const char *const usbd_desc_str[] = {
-	[USBD_STR_MANUF] = "Raspberry Pi",
-	[USBD_STR_PRODUCT] = "Pico",
+	[USBD_STR_MANUF] = "picouart",
+	[USBD_STR_PRODUCT] = "Pico FIFO UART Bridge",
 	[USBD_STR_SERIAL] = usbd_serial,
-	[USBD_STR_CDC] = "Board CDC",
+	[USBD_STR_CDC] = "FIFO UART Bridge CDC",
 };
 
 const uint8_t *tud_descriptor_device_cb(void)
