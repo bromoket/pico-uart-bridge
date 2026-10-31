@@ -30,6 +30,8 @@ Install `pyserial==3.5`, `pyusb==1.3.1` in a virtual environment. Native tests n
 
 ```sh
 bash scripts/test-host.sh
+# Optional SDK-aware clangd parsing, after the firmware build:
+bash scripts/check-editor.sh
 python scripts/test_hardware.py \
   --loopback-port /dev/serial/by-id/usb-picouart_Pico_FIFO_UART_Bridge_YOUR_ID-if02 \
   --output /path/to/loopback-results.json
@@ -42,5 +44,7 @@ python scripts/serial_capture.py \
 ```
 
 `serial_capture.py` uses exclusive access, binary output, mode 0600 and refuses overwrite. It prints a length/hash, not the potentially secret console body. Stable USB identities are required for tests; no port auto-selection may accidentally send random bytes to the router. The hardware runner's receiver works concurrently with its bounded writer; do not call an unbounded `flush()` before starting a reader and mistake a host-side deadlock for a wire limit.
+
+CMake exports `compile_commands.json` for SDK-aware editors. `check-editor.sh` uses the actual build database/generated PIO header and a narrowly trusted ARM GCC query driver; all four project C translation units passed parsing with zero errors. A generic LSP probe without those paths reports missing SDK headers and is not a valid target build check. Clangd 21's refactoring self-test reported an overlapping `SwapBinaryOperands` edit inside a valid TinyUSB descriptor macro; the script disables tweak self-tests, not parsing or diagnostics, and leaves the firmware macro unchanged. For an external build directory, set `BUILD_DIR` or link its compilation database locally; machine-specific compilation databases are ignored by Git.
 
 Source-level contract checks are not behavioral proof. Optical confirmation is attributed to the operator. Optional CTS/RTS/DTR physical wiring, other devices' boot protocols, Windows/macOS and externally powered USB-attach sequences remain outside the tested hardware matrix. The bridge does not turn a raw serial `cat` into a safe flash-writing protocol; future programming must verify transfer checksums and the target's actual update/recovery procedure.
