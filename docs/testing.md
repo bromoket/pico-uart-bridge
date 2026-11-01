@@ -4,7 +4,7 @@
 
 Tested on Linux, RP2040 B2, 16 MiB USB-C Pico-compatible clone; GP16/17 connected to an owned stock router, GP4/5 externally jumpered. ARM GCC 14.2.1, CMake 4.2.3, Pico SDK **2.3.1** (`079c6f39023649b154152db30f1d781e884879bc`), SDK-pinned TinyUSB. RGB enabled with `-DBRIDGE_RGB_PIN=23`; GP25 status LED. No UART overclock, no SWD debugger or independent logic analyzer attached. RGB color-cycle and operation visually confirmed by the operator during this session.
 
-The production default is 115200 8N1 on both ports. Test scripts change **only UART1** baud/framing/BREAK. Never attach a live target to the loopback test port. No target firmware writes were performed.
+The production default is 115200 8N1 on both ports. Test scripts change **only UART1** baud/framing/BREAK. Never attach a live target to the loopback test port. No target firmware writes were performed as part of this bridge test matrix; the separately authorized later router deployment is noted below.
 
 ## Results
 
@@ -19,6 +19,12 @@ The production default is 115200 8N1 on both ports. Test scripts change **only U
 - Sustained final-build soak: **104,857,600 exact bytes at 4 Mbaud** with RGB enabled and **253 exact router-console responses** in 278.762 seconds. Both ports had zero new dropped-byte, overrun, framing, parity or BREAK events. The earlier three-reboot combined run remains separately reported rather than conflated with this soak.
 - Independent picouart timing/format checks on the asymmetric build: **25 passed**.
 - USB controls on the asymmetric build: **7/7 passed**: five invalid line configurations rejected without changing hardware baud, continuous BREAK set/clear, **five remote BOOTSEL/application round trips** preserving default boot-capture baud. The Pico can be reflashed without the operator pressing BOOTSEL while functioning firmware/USB remain available; physical BOOTSEL is still necessary for a broken USB firmware image.
+
+### Later target deployment and editor verification — 2026-11-01
+
+The unchanged bridge also captured an independently authorized source-built target-firmware deployment, factory resets and subsequent reboots. Commands returned through the new target's UID-0 UART shell. USB diagnostics reported zero dropped-byte, overrun, framing, parity or BREAK counters on the router UART at the recorded checkpoint. The bridge itself was not reflashed for this deployment; target credentials, configuration and raw console bodies remain private and are not bridge test artifacts.
+
+A reported 21-error LED-source LSP state was traced to missing generated/SDK paths and ARM system-header discovery, not firmware logic. After using the real compilation database and scoped newlib visibility, all four project C translation units passed active LSP and the SDK-aware CLI checker with zero diagnostics; source bytes were unchanged. [Editor setup and cache-freshness guidance](editor-setup.md).
 
 ### Expected error tests, not concealed failures
 
