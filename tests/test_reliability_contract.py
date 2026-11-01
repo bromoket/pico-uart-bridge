@@ -5,6 +5,14 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 class ReliabilityContract(unittest.TestCase):
+    def test_multi_packet_usb_buffer_and_event_driven_configuration(self):
+        config = (ROOT / "tusb_config.h").read_text()
+        source = (ROOT / "uart-bridge.c").read_text()
+        self.assertIn("CFG_TUD_CDC_EP_BUFSIZE 512", config)
+        self.assertIn("config_pending", source)
+        self.assertIn("coding_queued", source)
+        self.assertIn("tud_umount_cb", source)
+
     def test_isr_is_nonblocking_and_counted(self):
         s = (ROOT / "uart-bridge.c").read_text()
         self.assertIn("ring_push", s)

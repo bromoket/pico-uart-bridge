@@ -11,8 +11,8 @@
   },
   "rgb_gpio": 23,
   "led_gpio": 25,
-  "uf2_bytes": 72704,
-  "uf2_sha256": "0b1ad4ecf80d10ef61cb1f33b30e976f169ce30179f435b5656049547fc26281",
+  "uf2_bytes": 73728,
+  "uf2_sha256": "97993f6531aca595c072edd322ee974dbfe0939dd0533f187bffc2c5ab3d8390",
   "flash_verified_against_local_build": true,
   "binary_location": "local-only; compile from source"
 }

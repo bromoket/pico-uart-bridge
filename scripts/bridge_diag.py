@@ -29,9 +29,18 @@ def snapshot(d):
     return [dict(zip(FIELDS, words[1 + i * 16 : 17 + i * 16])) for i in range(2)]
 
 
+def timing(d):
+    words = struct.unpack("<8I", bytes(d.ctrl_transfer(0xA1, 0x42, 0, 5, 32, timeout=2000)))
+    fields = ("usb_service_gap_us", "usb_blocked_max_us", "usb_rx_written", "usb_write_calls")
+    return [dict(zip(fields, words[i * 4 : (i + 1) * 4])) for i in range(2)]
+
+
 def main():
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--serial")
+    p.add_argument(
+        "--timing", action="store_true", help="Read USB service/backpressure timing extension"
+    )
     p.add_argument(
         "--led",
         type=int,
@@ -42,7 +51,7 @@ def main():
     d = device(a.serial)
     if a.led is not None:
         d.ctrl_transfer(0x21, 0x41, a.led, 5, b"", timeout=2000)
-    print(json.dumps(snapshot(d), indent=2))
+    print(json.dumps(timing(d) if a.timing else snapshot(d), indent=2))
 
 
 if __name__ == "__main__":

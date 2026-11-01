@@ -30,6 +30,11 @@ static bool diag_control(uint8_t rhport, uint8_t stage, tusb_control_request_t c
 		memcpy(&snapshot[1], bridge_stats, sizeof(bridge_stats));
 		return tud_control_xfer(rhport, req, snapshot, sizeof(snapshot));
 	}
+	if (req->bmRequestType == 0xa1 && req->bRequest == 0x42) {
+		static uint32_t timing[8];
+		memcpy(timing, bridge_timing, sizeof(timing));
+		return tud_control_xfer(rhport, req, timing, sizeof(timing));
+	}
 	if (req->bmRequestType == 0x21 && req->bRequest == 0x41 && req->wValue <= 5 &&
 	    req->wLength == 0) {
 		bridge_led_override = req->wValue;

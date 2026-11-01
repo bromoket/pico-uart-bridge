@@ -5,6 +5,7 @@ __pycache__/
 *.pyc
 .venv/
 .pytest_cache/
+.cache/
 compile_commands.json
 # Raw serial captures and target dumps are local-only, never public artifacts.
 *.bin

@@ -7,6 +7,7 @@ Source-built, dual USB–UART bridge forked from [Noltari](https://github.com/No
 - **Pico SDK 2.3.1**, pinned with its matching TinyUSB dependency.
 - **32 KiB SPSC rings in each direction on each UART**: no interrupt mutex, no buffer-shifting `memmove`, no drops merely because another core holds a lock.
 - Hardware FIFOs, receive-timeout handling, bounded IRQ work, RX pull-ups and clean idle/startup pin configuration.
+- **Asymmetric TinyUSB transfers: 512-byte IN, 64-byte OUT**, retaining 64-byte full-speed USB packets. A hash-checked C-source adaptation is generated at build time; the pinned SDK stays pristine. This fixes sustained drain throughput without stalling exact-64-byte commands.
 - Independent ports; no DTR requirement for byte transport; USB OUT backpressure. Enumeration alone no longer changes the default 115200 boot-capture baud to 9600.
 - Separate USB diagnostics for byte/error/overflow counters, queue depth, actual baud and GPIO mapping. No diagnostic text enters either UART stream.
 - Validated line coding, 5–8 data bits, none/odd/even/mark/space parity, 1/2 stop bits; nonblocking timed/continuous BREAK.
@@ -41,7 +42,7 @@ Python tools require `pyserial` and `pyusb`; see [testing](docs/testing.md). For
 
 ## Verified—and limits
 
-**70 hardware cases passed**, including 1 MiB transfers, 5–8-bit formats, DTR-low, timed BREAK, 25 reopens, finite host stalls, and intentional overflow/recovery. Extended self-loop tests passed through requested **7.5 Mbaud**; actual divisor-rounded baud is reported, not assumed. During a separate simultaneous router test, **52,690,944 loopback bytes matched**, a **512 KiB router boot partition matched its independent backup**, and three reboot captures completed with **zero new drop/overrun/framing/parity/BREAK events on either UART**. RGB operation was visually confirmed by the operator.
+**70 hardware cases passed** on the asymmetric build, including exact 64-byte boundaries, 1 MiB transfers, 5–8-bit formats, DTR-low, timed BREAK, 25 reopens, finite host stalls, and intentional overflow/recovery. A **100 MiB soak at 4 Mbaud**, with RGB and **253 simultaneous exact router responses**, passed with zero new UART drop/error events on either port. Short-burst self-loop tests passed through requested **7.5 Mbaud**; that is not a sustained-rate guarantee. Actual divisor-rounded baud is reported, not assumed. During a separate simultaneous router test, **52,690,944 loopback bytes matched**, a **512 KiB router boot partition matched its independent backup**, and three reboot captures completed with **zero new drop/overrun/framing/parity/BREAK events on either UART**. RGB operation was visually confirmed by the operator.
 
 These are bounded measurements, **not a universal losslessness or device-programming guarantee**. Infinite unthrottled input cannot fit finite RAM while a host is stalled. The overflow test deliberately drops bytes and checks that counters increase and the bridge recovers. Optional external flow/control wiring, other boards, Windows/macOS, external-power attach, and specific ESP/Beken programmers are not hardware-validated here. UART alone is not a NAND programmer.
 

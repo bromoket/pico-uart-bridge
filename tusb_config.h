@@ -15,6 +15,10 @@
 #define CFG_TUD_CDC 2
 #define CFG_TUD_CDC_RX_BUFSIZE 1024
 #define CFG_TUD_CDC_TX_BUFSIZE 1024
+/* Software transfer buffer, not USB wMaxPacketSize (which stays 64 at FS).
+ * Multi-packet IN transfers let RP2040 use its double-buffered bulk path. */
+#define CFG_TUD_CDC_EP_BUFSIZE 512
+#define CFG_TUD_CDC_EP_OUT_BUFSIZE 64
 
 void usbd_serial_init(void);
 

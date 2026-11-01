@@ -26,11 +26,12 @@ typedef struct {
 	bridge_ring_t rx, tx;
 	cdc_line_coding_t requested, applied;
 	mutex_t config_lock; /* Only foreground code; never used from an IRQ. */
-	uint32_t break_request, break_deadline;
-	bool timed_break;
+	uint32_t break_request, break_deadline, config_pending;
+	bool timed_break, coding_queued; /* coding_queued is owned only by USB core. */
 } bridge_port_t;
 static bridge_port_t ports[2];
 bridge_stats_t bridge_stats[2];
+bridge_timing_t bridge_timing[2];
 
 static void receive(uint index)
 {
@@ -77,17 +78,26 @@ void tud_cdc_line_coding_cb(uint8_t itf, cdc_line_coding_t const *lc)
 {
 	if (itf >= 2)
 		return;
-	if (!valid_coding(lc)) {
+	ports[itf].coding_queued = false;
+	if (!valid_coding(lc))
 		bridge_stats[itf].rejected_config++;
-		return;
-	}
-	/* Linux can SET_LINE_CODING(9600) during enumeration without an open
-	 * console. Preserve the 115200 boot-capture default until a real client
-	 * asserts DTR or sends OUT data. DTR-less clients are handled in usb_port. */
-	if (tud_cdc_n_connected(itf)) {
-		mutex_enter_blocking(&ports[itf].config_lock);
-		ports[itf].requested = *lc;
-		mutex_exit(&ports[itf].config_lock);
+	/* Queue at most once per configuration event in usb_port, and only once
+	 * a client asserts DTR or sends data. Enumeration alone preserves 115200. */
+}
+void tud_mount_cb(void)
+{
+	for (uint i = 0; i < 2; i++)
+		ports[i].coding_queued = false;
+}
+void tud_umount_cb(void)
+{
+	for (uint i = 0; i < 2; i++) {
+		ports[i].coding_queued = false;
+		bridge_stats[i].connected = 0;
+		SAVE(&ports[i].host_rts, 0);
+		SAVE(&ports[i].break_request, 0x10000u); /* Release a held BREAK. */
+		if (ports[i].dtr_pin >= 0)
+			gpio_put(ports[i].dtr_pin, true);
 	}
 }
 void tud_cdc_line_state_cb(uint8_t itf, bool dtr, bool rts)
@@ -107,9 +117,10 @@ void tud_cdc_send_break_cb(uint8_t itf, uint16_t duration_ms)
 static void update_config(uint index)
 {
 	bridge_port_t *p = &ports[index];
-	if (mutex_try_enter(&p->config_lock, NULL)) {
-		if (memcmp(&p->requested, &p->applied, sizeof(p->applied)) &&
-		    !(uart_get_hw(p->inst)->fr & UART_UARTFR_BUSY_BITS) && !ring_count(&p->tx)) {
+	if (LOAD(&p->config_pending) && mutex_try_enter(&p->config_lock, NULL)) {
+		if (!memcmp(&p->requested, &p->applied, sizeof(p->applied))) {
+			SAVE(&p->config_pending, 0);
+		} else if (!(uart_get_hw(p->inst)->fr & UART_UARTFR_BUSY_BITS) && !ring_count(&p->tx)) {
 			cdc_line_coding_t lc = p->requested;
 			irq_set_enabled(index ? UART1_IRQ : UART0_IRQ, false);
 			bridge_stats[index].actual_baud = uart_set_baudrate(p->inst, lc.bit_rate);
@@ -122,6 +133,7 @@ static void update_config(uint index)
 				hw_set_bits(&uart_get_hw(p->inst)->lcr_h, UART_UARTLCR_H_SPS_BITS);
 			p->applied = lc;
 			irq_set_enabled(index ? UART1_IRQ : UART0_IRQ, true);
+			SAVE(&p->config_pending, 0);
 		}
 		mutex_exit(&p->config_lock);
 	}
@@ -142,6 +154,14 @@ static void update_config(uint index)
 }
 static void usb_port(uint index)
 {
+	static uint32_t last_visit[2], blocked_since[2];
+	static bool blocked[2];
+	uint32_t now = time_us_32();
+	bridge_timing_t *timing = &bridge_timing[index];
+	uint32_t gap = now - last_visit[index];
+	if (last_visit[index] && gap > timing->usb_service_gap_us)
+		timing->usb_service_gap_us = gap;
+	last_visit[index] = now;
 	bridge_port_t *p = &ports[index];
 	/* USB OUT naturally backpressures once the software TX ring is full. */
 	uint32_t space = BRIDGE_RING_SIZE - ring_count(&p->tx);
@@ -149,16 +169,18 @@ static void usb_port(uint index)
 	uint32_t count = tud_cdc_n_available(index);
 	bool configured = true;
 	if (tud_cdc_n_connected(index) || count) {
-		cdc_line_coding_t lc;
-		tud_cdc_n_get_line_coding(index, &lc);
-		if (valid_coding(&lc)) {
-			mutex_enter_blocking(&p->config_lock);
-			p->requested = lc;
-			configured = !memcmp(&lc, &p->applied, sizeof(lc));
-			mutex_exit(&p->config_lock);
-		} else {
-			configured = false;
+		if (!p->coding_queued) {
+			cdc_line_coding_t lc;
+			tud_cdc_n_get_line_coding(index, &lc);
+			if (valid_coding(&lc)) {
+				mutex_enter_blocking(&p->config_lock);
+				p->requested = lc;
+				SAVE(&p->config_pending, 1);
+				p->coding_queued = true;
+				mutex_exit(&p->config_lock);
+			}
 		}
+		configured = p->coding_queued && !LOAD(&p->config_pending);
 	}
 	/* Never enqueue new-format bytes until the foreground core has applied it. */
 	if (!configured)
@@ -182,6 +204,19 @@ static void usb_port(uint index)
 		count = 512;
 	if (count) {
 		uint32_t sent = tud_cdc_n_write(index, &p->rx.bytes[tail & (BRIDGE_RING_SIZE - 1)], count);
+		timing->usb_write_calls++;
+		timing->usb_rx_written += sent;
+		if (!sent && !blocked[index]) {
+			blocked[index] = true;
+			blocked_since[index] = now;
+		}
+		if (blocked[index]) {
+			uint32_t span = now - blocked_since[index];
+			if (span > timing->usb_blocked_max_us)
+				timing->usb_blocked_max_us = span;
+			if (sent)
+				blocked[index] = false;
+		}
 		SAVE(&p->rx.tail, tail + sent);
 		if (sent)
 			tud_cdc_n_write_flush(index);
